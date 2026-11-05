@@ -21,7 +21,11 @@
   /* One full-screen stage; on iPhone it is sized to the real screen height (see script) so nothing stops short of the bottom edge */
   .stage { position: fixed; top: 0; left: 0; right: 0; height: var(--h); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: #05060a; color: #fff; overflow: hidden;
+  /* The page itself also carries the current picture (see script). iPhone apps can report a window shorter than the screen, and the
+     canvas behind the page is the only thing painted down there, so it must show the picture instead of plain black. */
+  html { height: var(--h); background: #05060a no-repeat center / cover; }
+  body { background: none; }
+  html, body { height: 100%; color: #fff; overflow: hidden;
     font-family: "Sora", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 
   /* Background layers: two stacked, crossfaded, slow zoom */
@@ -220,6 +224,8 @@ function showImage(img) {
       const next = $(current ? "bgA" : "bgB"), prev = $(current ? "bgB" : "bgA");
       current = 1 - current;
       next.style.backgroundImage = 'url("' + img.file.replace(/"/g, "%22") + '")';
+      const dim = "rgba(0,0,0," + (0.62 * CONFIG.veilStrength).toFixed(2) + ")";
+      document.documentElement.style.backgroundImage = "linear-gradient(" + dim + "," + dim + "), url(\"" + img.file.replace(/"/g, "%22") + "\")";
       next.classList.remove("show"); void next.offsetWidth; next.classList.add("show");
       setTimeout(() => prev.classList.remove("show"), 2400);
       setCredit(img); resolve(true);
