@@ -16,22 +16,25 @@
   @font-face { font-family: "Sora"; src: url("fonts/sora.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
   @font-face { font-family: "Instrument Serif"; src: url("fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-display: swap; }
 
-  :root { --accent: #ffd9a0; }
+  :root { --accent: #ffd9a0; --h: 100vh; }
+  @supports (height: 100lvh) { :root { --h: 100lvh; } }
+  /* One full-screen stage; on iPhone it is sized to the real screen height (see script) so nothing stops short of the bottom edge */
+  .stage { position: fixed; top: 0; left: 0; right: 0; height: var(--h); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: #05060a; color: #fff; overflow: hidden;
     font-family: "Sora", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 
   /* Background layers: two stacked, crossfaded, slow zoom */
-  .bg { position: fixed; top: 0; left: 0; right: 0; bottom: -160px; background-size: cover; background-position: center; opacity: 0;
+  .bg { position: fixed; top: 0; left: 0; right: 0; height: calc(var(--h) + 160px); background-size: cover; background-position: center; opacity: 0;
         transition: opacity 2.4s ease; transform: scale(1.02); will-change: opacity, transform; }
   .bg.show { opacity: 1; animation: drift 40s ease-out forwards; }
   @keyframes drift { from { transform: scale(1.02); } to { transform: scale(1.12); } }
-  .veil { position: fixed; top: 0; left: 0; right: 0; bottom: -160px; pointer-events: none;
+  .veil { position: fixed; top: 0; left: 0; right: 0; height: calc(var(--h) + 160px); pointer-events: none;
     background:
       radial-gradient(ellipse at center, rgba(0,0,0,.18) 0%, rgba(0,0,0,.55) 100%),
       linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,.10) 40%, rgba(0,0,0,.10) 55%, rgba(0,0,0,.65) 100%); }
 
-  main { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  main { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
          text-align: center; padding: 4vh 6vw; }
   .mode { font-size: clamp(11px, 1.05vw, 14px); letter-spacing: .38em; text-transform: uppercase; opacity: .8; margin-bottom: 2.2vh; }
   .headline { font-size: clamp(15px, 1.7vw, 24px); font-weight: 300; letter-spacing: .06em; opacity: .92; margin-bottom: 1vh; }
@@ -49,7 +52,7 @@
   body.rest-mode .clock, body.rest-mode .track, body.rest-mode .pct, body.rest-mode .headline { display: none; }
   body.rest-mode .rest { display: block; font-weight: 200; font-size: clamp(38px, 7vw, 110px); letter-spacing: -.02em; }
 
-  .quote { position: fixed; left: 50%; bottom: 7vh; transform: translateX(-50%); width: min(980px, 88vw); text-align: center;
+  .quote { position: absolute; left: 50%; bottom: 7vh; transform: translateX(-50%); width: min(980px, 88vw); text-align: center;
            transition: opacity 1.2s ease; }
   .quote.out { opacity: 0; }
   .quote q { display: block; quotes: none; font-family: "Instrument Serif", Georgia, serif; font-style: italic;
@@ -57,7 +60,7 @@
   .quote cite { display: block; margin-top: 1.4vh; font-style: normal; font-size: clamp(10px, .9vw, 13px);
                 letter-spacing: .34em; text-transform: uppercase; opacity: .72; }
 
-  .credit { position: fixed; right: 18px; bottom: 12px; font-size: 11px; opacity: .45; max-width: 40vw; text-align: right;
+  .credit { position: absolute; right: 18px; bottom: 12px; font-size: 11px; opacity: .45; max-width: 40vw; text-align: right;
             letter-spacing: .02em; transition: opacity .3s; }
   .credit:hover { opacity: .9; }
   /* Phone / portrait */
@@ -65,9 +68,11 @@
   main { padding-top: max(4vh, env(safe-area-inset-top)); padding-bottom: max(4vh, env(safe-area-inset-bottom)); }
   @media (max-aspect-ratio: 1/1) {
     .clock { font-size: clamp(54px, 19vw, 200px); }
-    .quote { bottom: max(6vh, calc(env(safe-area-inset-bottom) + 24px)); }
+    .quote { bottom: calc(env(safe-area-inset-bottom) + 64px); }
     .quote q { font-size: clamp(20px, 5.6vw, 34px); }
-    .credit { max-width: 70vw; bottom: max(8px, env(safe-area-inset-bottom)); }
+    /* source line sits alone on the very bottom row, centred, one line, so it can never collide with the quote */
+    .credit { left: 5vw; right: 5vw; max-width: none; text-align: center; bottom: calc(env(safe-area-inset-bottom) + 14px);
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mode { letter-spacing: .28em; }
   }
 </style>
@@ -77,6 +82,7 @@
   <div class="bg" id="bgB"></div>
   <div class="veil" id="veil"></div>
 
+<div class="stage">
   <main>
     <div class="mode" id="mode">Work day</div>
     <div class="headline">Time is precious. Not wasting it.</div>
@@ -88,6 +94,7 @@
 
   <div class="quote" id="quote"><q id="qText"></q><cite id="qAuthor"></cite></div>
   <div class="credit" id="credit"></div>
+</div>
 
 <script src="images.js"></script>
 <script>
@@ -274,6 +281,16 @@ function nextQuote(first) {
 
 /* ---------- Start ---------- */
 $("veil").style.opacity = CONFIG.veilStrength;
+
+/* iPhone installed app: use the real screen height so the picture reaches the bottom edge (no black band) */
+function fitScreen() {
+  if (navigator.standalone === true) {
+    const long = Math.max(screen.width, screen.height), short = Math.min(screen.width, screen.height);
+    const h = Math.max(window.innerHeight, document.documentElement.clientHeight, window.innerWidth > window.innerHeight ? short : long);
+    document.documentElement.style.setProperty("--h", h + "px");
+  }
+}
+fitScreen(); addEventListener("resize", fitScreen); addEventListener("orientationchange", () => setTimeout(fitScreen, 300));
 tick(); setInterval(tick, 250);
 nextQuote(true);
 nextBackground().then(loadOnline);
