@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05060a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Time">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Time is precious</title>
+<style>
+  .mode, .headline, .pct, .clock .g small, .quote cite, .credit { text-shadow: 0 1px 14px rgba(0,0,0,.7), 0 0 3px rgba(0,0,0,.45); }
+  @font-face { font-family: "Sora"; src: url("fonts/sora.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+  @font-face { font-family: "Instrument Serif"; src: url("fonts/instrument-serif-italic.woff2") format("woff2"); font-style: italic; font-display: swap; }
+
+  :root { --accent: #ffd9a0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #05060a; color: #fff; overflow: hidden;
+    font-family: "Sora", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+  /* Background layers: two stacked, crossfaded, slow zoom */
+  .bg { position: fixed; inset: 0; background-size: cover; background-position: center; opacity: 0;
+        transition: opacity 2.4s ease; transform: scale(1.02); will-change: opacity, transform; }
+  .bg.show { opacity: 1; animation: drift 40s ease-out forwards; }
+  @keyframes drift { from { transform: scale(1.02); } to { transform: scale(1.12); } }
+  .veil { position: fixed; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,.18) 0%, rgba(0,0,0,.55) 100%),
+      linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,.10) 40%, rgba(0,0,0,.10) 55%, rgba(0,0,0,.65) 100%); }
+
+  main { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+         text-align: center; padding: 4vh 6vw; }
+  .mode { font-size: clamp(11px, 1.05vw, 14px); letter-spacing: .38em; text-transform: uppercase; opacity: .8; margin-bottom: 2.2vh; }
+  .headline { font-size: clamp(15px, 1.7vw, 24px); font-weight: 300; letter-spacing: .06em; opacity: .92; margin-bottom: 1vh; }
+  .clock { display: flex; justify-content: center; align-items: flex-start; font-weight: 200; font-size: clamp(64px, 17vw, 300px);
+           line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; text-shadow: 0 6px 60px rgba(0,0,0,.45); }
+  .clock .g { display: flex; flex-direction: column; align-items: center; }
+  .clock .g small { margin-top: 1.2vh; font-size: clamp(10px, .95vw, 13px); font-weight: 400; letter-spacing: .4em; margin-right: -.4em;
+                    text-transform: uppercase; opacity: .75; }
+  .clock .sep { opacity: .4; padding: 0 .06em; }
+  .track { width: min(560px, 60vw); height: 2px; background: rgba(255,255,255,.22); margin: 4vh auto 1.2vh; border-radius: 2px; overflow: hidden; }
+  .track i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
+  .pct { font-size: clamp(11px, .95vw, 13px); letter-spacing: .22em; text-transform: uppercase; opacity: .7; }
+
+  .rest { display: none; }
+  body.rest-mode .clock, body.rest-mode .track, body.rest-mode .pct, body.rest-mode .headline { display: none; }
+  body.rest-mode .rest { display: block; font-weight: 200; font-size: clamp(38px, 7vw, 110px); letter-spacing: -.02em; }
+
+  .quote { position: fixed; left: 50%; bottom: 7vh; transform: translateX(-50%); width: min(980px, 88vw); text-align: center;
+           transition: opacity 1.2s ease; }
+  .quote.out { opacity: 0; }
+  .quote q { display: block; quotes: none; font-family: "Instrument Serif", Georgia, serif; font-style: italic;
+             font-size: clamp(20px, 2.5vw, 38px); line-height: 1.25; text-shadow: 0 2px 24px rgba(0,0,0,.6); }
+  .quote cite { display: block; margin-top: 1.4vh; font-style: normal; font-size: clamp(10px, .9vw, 13px);
+                letter-spacing: .34em; text-transform: uppercase; opacity: .72; }
+
+  .credit { position: fixed; right: 18px; bottom: 12px; font-size: 11px; opacity: .45; max-width: 40vw; text-align: right;
+            letter-spacing: .02em; transition: opacity .3s; }
+  .credit:hover { opacity: .9; }
+  /* Phone / portrait */
+  html, body { -webkit-tap-highlight-color: transparent; }
+  main { padding-top: max(4vh, env(safe-area-inset-top)); padding-bottom: max(4vh, env(safe-area-inset-bottom)); }
+  @media (max-aspect-ratio: 1/1) {
+    .clock { font-size: clamp(54px, 19vw, 200px); }
+    .quote { bottom: max(6vh, calc(env(safe-area-inset-bottom) + 24px)); }
+    .quote q { font-size: clamp(20px, 5.6vw, 34px); }
+    .credit { max-width: 70vw; bottom: max(8px, env(safe-area-inset-bottom)); }
+    .mode { letter-spacing: .28em; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg" id="bgA"></div>
+  <div class="bg" id="bgB"></div>
+  <div class="veil" id="veil"></div>
+
+  <main>
+    <div class="mode" id="mode">Work day</div>
+    <div class="headline">Time is precious. Not wasting it.</div>
+    <div class="clock" id="clock"></div>
+    <div class="track"><i id="bar"></i></div>
+    <div class="pct" id="pct"></div>
+    <div class="rest" id="rest">The day is done.<br>Rest well.</div>
+  </main>
+
+  <div class="quote" id="quote"><q id="qText"></q><cite id="qAuthor"></cite></div>
+  <div class="credit" id="credit"></div>
+
+<script src="images.js"></script>
+<script>
+/* ---------- Settings (edit here) ---------- */
+const CONFIG = {
+  workEnd:   { h: 18, m: 0  },   // weekdays: count down to this
+  workStart: { h: 9,  m: 0  },   // used only for the progress line
+  dayEnd:    { h: 22, m: 0  },   // evenings and weekends: count down to this
+  dayStart:  { h: 6,  m: 0  },   // used only for the progress line
+  restUntil: { h: 5,  m: 0  },   // after dayEnd until this hour, show the rest screen
+  veilStrength: 0.7,             // darkness over the images: 0 = none, 1 = original strong veil
+  rotateSeconds: 300,            // new background and quote every 5 minutes
+  onlineImages: true             // fetch fresh nature photos when connected
+};
+
+/* ---------- Quotes ---------- */
+const QUOTES = [
+ ["It is not that we have a short time to live, but that we waste much of it.", "Seneca"],
+ ["While we are postponing, life speeds by.", "Seneca"],
+ ["Nothing, Lucilius, is ours, except time.", "Seneca"],
+ ["Begin at once to live, and count each separate day as a separate life.", "Seneca"],
+ ["The greatest obstacle to living is expectancy, which hangs upon tomorrow and loses today.", "Seneca"],
+ ["We are always complaining that our days are few, and acting as though there would be no end of them.", "Seneca"],
+ ["Life is long if you know how to use it.", "Seneca"],
+ ["You could leave life right now. Let that determine what you do and say and think.", "Marcus Aurelius"],
+ ["Waste no more time arguing about what a good man should be. Be one.", "Marcus Aurelius"],
+ ["Time is a sort of river of passing events, and strong is its current.", "Marcus Aurelius"],
+ ["Confine yourself to the present.", "Marcus Aurelius"],
+ ["Think of yourself as dead. You have lived your life. Now take what is left and live it properly.", "Marcus Aurelius"],
+ ["How long will you wait before you demand the best for yourself?", "Epictetus"],
+ ["Lost time is never found again.", "Benjamin Franklin"],
+ ["Dost thou love life? Then do not squander time, for that is the stuff life is made of.", "Benjamin Franklin"],
+ ["Time is what we want most, but what we use worst.", "William Penn"],
+ ["The two most powerful warriors are patience and time.", "Leo Tolstoy"],
+ ["Time is the most valuable thing a man can spend.", "Theophrastus"],
+ ["It is not enough to be industrious; so are the ants. What are you industrious about?", "Henry David Thoreau"],
+ ["You cannot kill time without injuring eternity.", "Henry David Thoreau"],
+ ["The future is something which everyone reaches at the rate of sixty minutes an hour, whatever he does, whoever he is.", "C. S. Lewis"],
+ ["Time flies over us, but leaves its shadow behind.", "Nathaniel Hawthorne"],
+ ["Seize the day, trusting as little as possible in tomorrow.", "Horace"],
+ ["Time flees, and it flees beyond recall.", "Virgil"],
+ ["Life is short, the art long.", "Hippocrates"],
+ ["Time is the wisest counselor.", "Pericles"],
+ ["Ordinary people think merely of spending time. Great people think of using it.", "Arthur Schopenhauer"],
+ ["Until we can manage time, we can manage nothing else.", "Peter Drucker"],
+ ["Your time is limited, so do not waste it living someone else's life.", "Steve Jobs"],
+ ["The bad news is time flies. The good news is you are the pilot.", "Michael Altshuler"],
+ ["The key is not spending time, but investing it.", "Stephen R. Covey"],
+ ["The present moment is the only time over which we have dominion.", "Thich Nhat Hanh"],
+ ["Wherever you are, be all there.", "Jim Elliot"],
+ ["How we spend our days is, of course, how we spend our lives.", "Annie Dillard"],
+ ["Lose an hour in the morning, and you will spend all day looking for it.", "Richard Whately"],
+ ["An inch of time is an inch of gold, but you cannot buy that inch of time with an inch of gold.", "Chinese proverb"],
+ ["The best time to plant a tree was twenty years ago. The second best time is now.", "Chinese proverb"],
+ ["Memento mori. Remember that you will die, and let it make today count.", "Stoic reminder"]
+];
+
+/* ---------- Helpers ---------- */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const at = (d, t) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), t.h, t.m, 0, 0);
+
+function currentTarget(now) {
+  const dow = now.getDay();                       // 0 Sun ... 6 Sat
+  const weekday = dow >= 1 && dow <= 5;
+  const dayEnd = at(now, CONFIG.dayEnd);
+  const restEnd = at(now, CONFIG.restUntil);
+  if (now >= dayEnd || now < restEnd) return { rest: true };
+  if (weekday) {
+    const workEnd = at(now, CONFIG.workEnd);
+    if (now < workEnd) return { label: "Work day · until " + pad(CONFIG.workEnd.h) + ":" + pad(CONFIG.workEnd.m),
+                                start: at(now, CONFIG.workStart), end: workEnd, kind: "work" };
+  }
+  return { label: "Your day · until " + pad(CONFIG.dayEnd.h) + ":" + pad(CONFIG.dayEnd.m),
+           start: at(now, CONFIG.dayStart), end: dayEnd, kind: "day" };
+}
+
+let lastKind = null;
+function tick() {
+  const now = new Date();
+  const t = currentTarget(now);
+  document.body.classList.toggle("rest-mode", !!t.rest);
+  if (t.rest) {
+    $("mode").textContent = "Day complete";
+    document.title = "Day complete";
+    return;
+  }
+  if (t.kind !== lastKind) { lastKind = t.kind; $("mode").textContent = t.label; }
+  let s = Math.max(0, Math.floor((t.end - now) / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  $("clock").innerHTML = '<div class="g">' + pad(h) + '<small>hours</small></div><span class="sep">:</span>' +
+    '<div class="g">' + pad(m) + '<small>minutes</small></div><span class="sep">:</span>' +
+    '<div class="g">' + pad(sec) + '<small>seconds</small></div>';
+  document.title = pad(h) + ":" + pad(m) + ":" + pad(sec) + " left";
+  const total = t.end - t.start;
+  const done = Math.min(1, Math.max(0, (now - t.start) / total));
+  $("bar").style.width = (done * 100).toFixed(2) + "%";
+  $("pct").textContent = Math.round(done * 100) + "% of the " + (t.kind === "work" ? "work day" : "day") + " is behind you";
+}
+
+/* ---------- Backgrounds ---------- */
+let pool = (window.LOCAL_IMAGES || []).slice();
+let current = 0, usedRecent = [];
+
+function pick() {
+  const candidates = pool.filter(p => !usedRecent.includes(p.file));
+  const list = candidates.length ? candidates : pool;
+  const choice = list[Math.floor(Math.random() * list.length)];
+  usedRecent.push(choice.file);
+  if (usedRecent.length > Math.min(10, pool.length - 1)) usedRecent.shift();
+  return choice;
+}
+
+function setCredit(img) {
+  const parts = [img.title, img.credit].filter(Boolean);
+  $("credit").textContent = parts.join(" · ");
+}
+
+function showImage(img) {
+  return new Promise(resolve => {
+    const loader = new Image();
+    loader.onload = () => {
+      const next = $(current ? "bgA" : "bgB"), prev = $(current ? "bgB" : "bgA");
+      current = 1 - current;
+      next.style.backgroundImage = 'url("' + img.file.replace(/"/g, "%22") + '")';
+      next.classList.remove("show"); void next.offsetWidth; next.classList.add("show");
+      setTimeout(() => prev.classList.remove("show"), 2400);
+      setCredit(img); resolve(true);
+    };
+    loader.onerror = () => resolve(false);
+    loader.src = img.file;
+  });
+}
+
+async function nextBackground() {
+  for (let i = 0; i < 4; i++) {
+    const img = pick();
+    if (await showImage(img)) return;
+    pool = pool.filter(p => p !== img);          // drop broken items (e.g. offline)
+    if (!pool.length) pool = (window.LOCAL_IMAGES || []).slice();
+  }
+}
+
+/* Fresh nature photos from Wikimedia Commons (featured pictures), mixed into the pool when online */
+async function loadOnline() {
+  if (!CONFIG.onlineImages || !navigator.onLine) return;
+  const cats = ["Featured_pictures_of_landscapes", "Featured_pictures_of_mountains", "Featured_pictures_of_sunsets",
+                "Featured_pictures_of_forests", "Featured_pictures_of_lakes", "Featured_pictures_of_beaches"];
+  const cat = cats[Math.floor(Math.random() * cats.length)];
+  const url = "https://commons.wikimedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=Category:" + cat +
+    "&gcmtype=file&gcmlimit=60&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=1920&format=json&origin=*";
+  try {
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(url, { signal: ctl.signal });
+    const d = await r.json();
+    const strip = s => (s || "").replace(/<[^>]+>/g, "").trim();
+    const fresh = Object.values(d.query.pages).map(p => {
+      const ii = (p.imageinfo || [])[0]; if (!ii || !ii.thumburl) return null;
+      const meta = ii.extmetadata || {};
+      const ratio = ii.width / ii.height;
+      if (ii.width < 3000 || ratio < 1.4 || ratio > 2.3) return null;
+      if (!/CC BY|CC0|Public domain|PD/i.test((meta.LicenseShortName || {}).value || "")) return null;
+      const title = strip((meta.ObjectName || {}).value || p.title.replace(/^File:/, "").replace(/\.\w+$/, ""));
+      const artist = strip((meta.Artist || {}).value || "").slice(0, 60);
+      return { file: ii.thumburl, kind: "online", title: title, credit: artist };
+    }).filter(Boolean);
+    pool = pool.concat(fresh);
+  } catch (e) { /* offline or blocked: bundled set keeps working */ }
+}
+
+/* ---------- Quotes ---------- */
+let lastQuote = -1;
+function nextQuote(first) {
+  const el = $("quote");
+  const swap = () => {
+    let i; do { i = Math.floor(Math.random() * QUOTES.length); } while (i === lastQuote && QUOTES.length > 1);
+    lastQuote = i;
+    $("qText").textContent = "“" + QUOTES[i][0] + "”";
+    $("qAuthor").textContent = QUOTES[i][1];
+    el.classList.remove("out");
+  };
+  if (first) swap(); else { el.classList.add("out"); setTimeout(swap, 1200); }
+}
+
+/* ---------- Start ---------- */
+$("veil").style.opacity = CONFIG.veilStrength;
+tick(); setInterval(tick, 250);
+nextQuote(true);
+nextBackground().then(loadOnline);
+setInterval(() => { nextBackground(); nextQuote(false); }, CONFIG.rotateSeconds * 1000);
+document.addEventListener("click", () => { nextBackground(); nextQuote(false); });
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+document.addEventListener("keydown", e => { if (e.code === "Space" || e.key === "ArrowRight") { nextBackground(); nextQuote(false); } });
+</script>
+</body>
+</html>
