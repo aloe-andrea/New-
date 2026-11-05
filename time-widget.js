@@ -125,7 +125,7 @@ function timer(parent, size) {
 // ---------- Widgets ----------
 async function homeWidget() {
   const w = new ListWidget();
-  w.url = CONFIG.site;
+  w.url = TAP_URL;
   const sizes = { small: [340, 340], medium: [728, 340], large: [728, 764], extraLarge: [1460, 764] };
   const [bw, bh] = sizes[family] || sizes.medium;
   w.backgroundImage = backdrop(await loadPicture(), bw, bh);
@@ -164,7 +164,7 @@ async function homeWidget() {
 
 function lockWidget() {
   const w = new ListWidget();
-  w.url = CONFIG.site;
+  w.url = TAP_URL;
   if (family === "accessoryInline") {
     if (t.rest) w.addText("Day complete. Rest well.");
     else { const d = w.addDate(t.end); d.applyTimerStyle(); }
@@ -190,17 +190,26 @@ function lockWidget() {
 }
 
 // ---------- Run ----------
-const widget = isLock ? lockWidget() : await homeWidget();
+// iOS opens any web address from a widget in Safari, and cannot open a Home Screen web app directly.
+// So a tap re-opens this script, which shows the full page full screen inside Scriptable, without Safari.
+const TAP_URL = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?open=page";
+const openPage = (args.queryParameters || {}).open === "page";
 
-// Refresh soon after the target time (so the mode switches), otherwise about every 20 minutes for a new picture and quote.
-const next = new Date(now.getTime() + 20 * 60 * 1000);
-let switchAt = t.rest ? at(now, CONFIG.restUntil) : new Date(t.end.getTime() + 5000);
-if (switchAt <= now) switchAt = new Date(switchAt.getTime() + 24 * 3600 * 1000);
-widget.refreshAfterDate = switchAt < next ? switchAt : next;
-
-if (config.runsInWidget || config.runsInAccessoryWidget) {
-  Script.setWidget(widget);
+if (openPage) {
+  await WebView.loadURL(CONFIG.site, null, true);
 } else {
-  await widget.presentMedium();   // preview when you run the script inside the app
+  const widget = isLock ? lockWidget() : await homeWidget();
+
+  // Refresh soon after the target time (so the mode switches), otherwise about every 20 minutes for a new picture and quote.
+  const next = new Date(now.getTime() + 20 * 60 * 1000);
+  let switchAt = t.rest ? at(now, CONFIG.restUntil) : new Date(t.end.getTime() + 5000);
+  if (switchAt <= now) switchAt = new Date(switchAt.getTime() + 24 * 3600 * 1000);
+  widget.refreshAfterDate = switchAt < next ? switchAt : next;
+
+  if (config.runsInWidget || config.runsInAccessoryWidget) {
+    Script.setWidget(widget);
+  } else {
+    await widget.presentMedium();   // preview when you run the script inside the app
+  }
 }
 Script.complete();
