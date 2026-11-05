@@ -64,7 +64,7 @@
             letter-spacing: .02em; transition: opacity .3s; }
   .credit:hover { opacity: .9; }
   /* Phone / portrait */
-  html, body { -webkit-tap-highlight-color: transparent; }
+  html, body { -webkit-tap-highlight-color: transparent; cursor: pointer; }   /* cursor makes iOS deliver taps to the page script */
   main { padding-top: max(4vh, env(safe-area-inset-top)); padding-bottom: max(4vh, env(safe-area-inset-bottom)); }
   @media (max-aspect-ratio: 1/1) {
     .clock { font-size: clamp(54px, 19vw, 200px); }
@@ -325,6 +325,7 @@ function fitScreen() {
     box.textContent = info();
     document.querySelector(".stage").append(box);
   }
+  if (location.hash === "#debug") setTimeout(toggle, 800);   // open the address ending in #debug to see the panel without tapping
   document.addEventListener("click", e => {
     if (!e.target.closest || !e.target.closest("#mode")) return;
     taps++; clearTimeout(timer); timer = setTimeout(() => taps = 0, 1500);
