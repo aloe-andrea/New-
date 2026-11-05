@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install the Time widget</title>
+<style>
+  @font-face { font-family: "Sora"; src: url("fonts/sora.woff2") format("woff2"); font-weight: 100 800; }
+  body { margin: 0; min-height: 100vh; background: #0b1026 linear-gradient(180deg, #0b1026, #2b1b4a 60%, #6b3a3a); color: #fff;
+         font-family: "Sora", -apple-system, sans-serif; padding: 48px 24px; box-sizing: border-box; }
+  h1 { font-weight: 200; font-size: 34px; margin: 0 0 8px; letter-spacing: -.02em; }
+  p.sub { opacity: .75; margin: 0 0 28px; font-size: 15px; }
+  button { width: 100%; padding: 18px; font: 600 17px "Sora", sans-serif; border: 0; border-radius: 14px; background: #ffd9a0; color: #1b1323; }
+  #status { min-height: 22px; margin: 12px 0 24px; text-align: center; font-size: 14px; opacity: .9; }
+  ol { padding-left: 22px; line-height: 1.6; font-size: 15px; }
+  li { margin-bottom: 10px; }
+  b { font-weight: 600; }
+  a { color: #ffd9a0; }
+</style>
+</head>
+<body>
+  <h1>Time widget</h1>
+  <p class="sub">Countdown, quote and picture on your Home Screen and Lock Screen.</p>
+  <button id="copy">1 · Copy the widget script</button>
+  <div id="status">Loading…</div>
+  <ol>
+    <li>Install <a href="https://apps.apple.com/app/scriptable/id1405459188">Scriptable</a> from the App Store (free).</li>
+    <li>Tap the button above to copy the script.</li>
+    <li>Open Scriptable, tap <b>+</b>, paste, then tap the title at the top and name it <b>Time</b>. Tap <b>Done</b>.</li>
+    <li>Tap the script once to see a preview and allow network access if asked.</li>
+    <li><b>Home Screen:</b> long-press an empty spot, <b>Edit</b>, <b>Add Widget</b>, choose <b>Scriptable</b>, pick a size, add it.
+        Long-press the new widget, <b>Edit Widget</b>, set Script to <b>Time</b>.</li>
+    <li><b>Lock Screen:</b> long-press the Lock Screen, <b>Customize</b>, <b>Lock Screen</b>, tap the widget area, add <b>Scriptable</b>,
+        then tap it and set Script to <b>Time</b>.</li>
+  </ol>
+<script>
+  let code = null;
+  fetch("time-widget.js", { cache: "no-store" }).then(r => r.text()).then(t => { code = t; status("Ready."); })
+    .catch(() => status("Could not load the script. Check your connection and reload."));
+  function status(s) { document.getElementById("status").textContent = s; }
+  document.getElementById("copy").addEventListener("click", async () => {
+    if (!code) return status("Still loading, try again in a second.");
+    try { await navigator.clipboard.writeText(code); status("Copied. Now open Scriptable and paste."); }
+    catch (e) {
+      const ta = document.createElement("textarea"); ta.value = code; document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, code.length);
+      status(document.execCommand("copy") ? "Copied. Now open Scriptable and paste." : "Copy failed: long-press to select, then Copy.");
+      ta.remove();
+    }
+  });
+</script>
+</body>
+</html>
