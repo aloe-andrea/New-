@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#05060a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- "black", not "black-translucent": on iOS 26 the translucent mode leaves the app window 62pt short of the screen bottom (black band) -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Time">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -291,8 +292,7 @@ $("veil").style.opacity = CONFIG.veilStrength;
 /* iPhone installed app: use the real screen height so the picture reaches the bottom edge (no black band) */
 function fitScreen() {
   if (navigator.standalone === true) {
-    const long = Math.max(screen.width, screen.height), short = Math.min(screen.width, screen.height);
-    const h = Math.max(window.innerHeight, document.documentElement.clientHeight, window.innerWidth > window.innerHeight ? short : long);
+    const h = Math.max(window.innerHeight, document.documentElement.clientHeight);   // the real app window, never taller
     document.documentElement.style.setProperty("--h", h + "px");
   }
 }
