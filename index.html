@@ -290,6 +290,47 @@ function fitScreen() {
     document.documentElement.style.setProperty("--h", h + "px");
   }
 }
+/* Diagnostics: tap the small "mode" label at the top 5 times to show/hide measurements (for troubleshooting only) */
+(function () {
+  let taps = 0, timer = null, box = null;
+  function info() {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;left:0;top:0;width:0;height:100vh;visibility:hidden";
+    const probe2 = document.createElement("div");
+    probe2.style.cssText = "position:fixed;left:0;top:0;width:0;height:100lvh;visibility:hidden";
+    const probe3 = document.createElement("div");
+    probe3.style.cssText = "position:fixed;left:0;top:0;width:0;bottom:0;visibility:hidden";
+    document.body.append(probe, probe2, probe3);
+    const cs = getComputedStyle(document.documentElement);
+    const sb = document.createElement("div");
+    sb.style.cssText = "position:fixed;left:0;top:0;width:0;padding-bottom:env(safe-area-inset-bottom);padding-top:env(safe-area-inset-top)";
+    document.body.append(sb);
+    const r = {
+      standalone: navigator.standalone, displayMode: matchMedia("(display-mode: standalone)").matches,
+      innerH: innerHeight, innerW: innerWidth, clientH: document.documentElement.clientHeight,
+      screenH: screen.height, screenW: screen.width, availH: screen.availHeight,
+      vvH: window.visualViewport && Math.round(visualViewport.height),
+      "100vh": probe.offsetHeight, "100lvh": probe2.offsetHeight, "fixed top+bottom0": probe3.offsetHeight,
+      "--h": cs.getPropertyValue("--h"), safeTop: sb.offsetHeight && getComputedStyle(sb).paddingTop,
+      safeBottom: getComputedStyle(sb).paddingBottom, dpr: devicePixelRatio, ua: navigator.userAgent.replace(/.*\(([^)]*)\).*Version\/([\d.]+).*/, "$1 Safari $2")
+    };
+    probe.remove(); probe2.remove(); probe3.remove(); sb.remove();
+    return Object.entries(r).map(([k, v]) => k + ": " + v).join("\n");
+  }
+  function toggle() {
+    if (box) { box.remove(); box = null; return; }
+    box = document.createElement("pre");
+    box.style.cssText = "position:absolute;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 40px);z-index:99;margin:0;padding:10px;" +
+      "background:rgba(0,0,0,.82);color:#9f9;font:11px/1.35 ui-monospace,Menlo,monospace;white-space:pre-wrap;border-radius:8px";
+    box.textContent = info();
+    document.querySelector(".stage").append(box);
+  }
+  document.addEventListener("click", e => {
+    if (!e.target.closest || !e.target.closest("#mode")) return;
+    taps++; clearTimeout(timer); timer = setTimeout(() => taps = 0, 1500);
+    if (taps >= 5) { taps = 0; toggle(); }
+  });
+})();
 fitScreen(); addEventListener("resize", fitScreen); addEventListener("orientationchange", () => setTimeout(fitScreen, 300));
 tick(); setInterval(tick, 250);
 nextQuote(true);
