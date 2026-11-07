@@ -2,190 +2,297 @@ window.LOCAL_IMAGES = [
  {
   "file": "images/nature_00.jpg",
   "kind": "nature",
-  "title": "Anfiteatro, Valle de la Luna, San Pedro de Atacama, Chile, 2016-02-01, DD 149",
+  "title": "Valley of the Moon, Atacama",
   "credit": "Diego Delso",
-  "license": "CC BY-SA 4.0"
+  "lum": 160,
+  "tone": "day"
  },
  {
   "file": "images/nature_01.jpg",
   "kind": "nature",
-  "title": "Blue Lake in Mount Cook National Park",
+  "title": "Blue Lake, Mount Cook National Park",
   "credit": "Krzysztof Golik",
-  "license": "CC BY-SA 4.0"
+  "lum": 136,
+  "tone": "day"
  },
  {
   "file": "images/nature_02.jpg",
   "kind": "nature",
   "title": "Flatirons Sunrise",
   "credit": "Tyler Cipriani",
-  "license": "CC BY-SA 4.0"
+  "lum": 109,
+  "tone": "dawn"
  },
  {
   "file": "images/nature_03.jpg",
   "kind": "nature",
-  "title": "Conical shadow of Mount Nam Xay over green trees at golden hour, South-West view from the top, Vang Vieng, Laos",
+  "title": "Shadow of Mount Nam Xay",
   "credit": "Basile Morin",
-  "license": "CC BY-SA 4.0"
+  "lum": 121,
+  "tone": "dawn"
  },
  {
   "file": "images/nature_04.jpg",
   "kind": "nature",
-  "title": "Im Naturwaldreservat Wildacker 15",
+  "title": "Beech forest, Wildacker reserve",
   "credit": "Stephan van Helden",
-  "license": "CC BY-SA 4.0"
+  "lum": 103,
+  "tone": "dawn"
  },
  {
   "file": "images/nature_07.jpg",
   "kind": "nature",
-  "title": "Berchtesgaden 02",
+  "title": "Berchtesgaden",
   "credit": "Dmytro Balkhovitin",
-  "license": "CC BY-SA 4.0"
+  "lum": 126,
+  "tone": "day"
  },
  {
   "file": "images/nature_08.jpg",
   "kind": "nature",
-  "title": "Dornbirn First Mörzelspitze",
+  "title": "Dornbirn, Märzelspitze",
   "credit": "Herbert Heim",
-  "license": "CC BY-SA 4.0"
+  "lum": 144,
+  "tone": "day"
  },
  {
   "file": "images/nature_09.jpg",
   "kind": "nature",
-  "title": "01-พระที่นั่งคูหาคฤหาสน์",
+  "title": "Phraya Nakhon Cave",
   "credit": "BerryJ",
-  "license": "CC BY-SA 4.0"
+  "lum": 70,
+  "tone": "day"
  },
  {
   "file": "images/nature_10.jpg",
   "kind": "nature",
-  "title": "Dülmen, Naturschutzgebiet -Am Enteborn- -- 2014 -- 0202",
+  "title": "Enteborn nature reserve, Dülmen",
   "credit": "Dietmar Rabich",
-  "license": "CC BY-SA 4.0"
+  "lum": 99,
+  "tone": "dawn"
  },
  {
   "file": "images/nature_11.jpg",
   "kind": "nature",
   "title": "Mount Shasta, Lake Siskiyou, SW view",
   "credit": "Radomianin",
-  "license": "CC BY-SA 4.0"
+  "lum": 114,
+  "tone": "day"
  },
  {
   "file": "images/nature_12.jpg",
   "kind": "nature",
   "title": "Evening on Kathleen Lake",
   "credit": "Jakub Fryš",
-  "license": "CC BY-SA 4.0"
+  "lum": 118,
+  "tone": "golden"
  },
  {
   "file": "images/nature_13.jpg",
   "kind": "nature",
-  "title": "Dagestan-015",
+  "title": "Dagestan",
   "credit": "Alexander Novikov",
-  "license": "CC BY-SA 4.0"
+  "lum": 149,
+  "tone": "day"
  },
  {
   "file": "images/nature_14.jpg",
   "kind": "nature",
-  "title": "Andiast-Breil-Brigels. 24-09-2025. (d.j.b.) 08",
+  "title": "Andiast, Breil/Brigels",
   "credit": "Dominicus Johannes Bergsma.",
-  "license": "CC BY-SA 4.0"
+  "lum": 129,
+  "tone": "day"
  },
  {
   "file": "images/nature_16.jpg",
   "kind": "nature",
-  "title": "Chara Sands before it rains - Kalarsky District, Zabaykalsky Krai, Siberia",
+  "title": "Chara Sands, Zabaykalsky",
   "credit": "Ellebedeva",
-  "license": "CC BY-SA 4.0"
+  "lum": 118,
+  "tone": "golden"
  },
  {
   "file": "images/nature_18.jpg",
   "kind": "nature",
-  "title": "20250708 Teide 03",
+  "title": "Teide",
   "credit": "Flocci Nivis",
-  "license": "CC BY-SA 4.0"
+  "lum": 148,
+  "tone": "day"
  },
  {
   "file": "images/nature_19.jpg",
   "kind": "nature",
-  "title": "Casal de turistas caminha em uma duna, enquanto o dia morre nos Lençóis Maranhenses (edited)",
+  "title": "Dunes",
   "credit": "Original:  Julio Cesar Goncalves Corrêa\nDerivative work:  Aristeas",
-  "license": "CC BY-SA 4.0"
+  "lum": 144,
+  "tone": "golden"
  },
  {
   "file": "images/art_00.jpg",
   "kind": "art",
-  "title": "Albert Bierstadt - Among the Sierra Nevada, California - Google Art Project",
-  "credit": "",
-  "license": "Public domain"
+  "title": "Among the Sierra Nevada, California",
+  "credit": "Albert Bierstadt",
+  "lum": 104,
+  "tone": "golden"
  },
  {
   "file": "images/art_01.jpg",
   "kind": "art",
-  "title": "Caspar David Friedrich - Das Eismeer - Hamburger Kunsthalle - 02",
-  "credit": "",
-  "license": "Public domain"
+  "title": "The Sea of Ice",
+  "credit": "Caspar David Friedrich",
+  "lum": 133,
+  "tone": "day"
  },
  {
   "file": "images/art_02.jpg",
   "kind": "art",
-  "title": "Caspar David Friedrich - Der Mönch am Meer - Google Art Project",
-  "credit": "",
-  "license": "Public domain"
+  "title": "Monk by the Sea",
+  "credit": "Caspar David Friedrich",
+  "lum": 129,
+  "tone": "night"
  },
  {
   "file": "images/art_03.jpg",
   "kind": "art",
-  "title": "Claude Monet, Impression, soleil levant, 1872",
-  "credit": "",
-  "license": "Public domain"
+  "title": "Impression, Sunrise",
+  "credit": "Claude Monet",
+  "lum": 119,
+  "tone": "dawn"
  },
  {
   "file": "images/art_04.jpg",
   "kind": "art",
-  "title": "Red Fuji southern wind clear morning",
-  "credit": "",
-  "license": "Public domain"
+  "title": "Fine Wind, Clear Morning",
+  "credit": "Katsushika Hokusai",
+  "lum": 111,
+  "tone": "dawn"
  },
  {
   "file": "images/art_05.jpg",
   "kind": "art",
-  "title": "Starry Night Over the Rhone",
-  "credit": "",
-  "license": "Public domain"
+  "title": "Starry Night Over the Rhône",
+  "credit": "Vincent van Gogh",
+  "lum": 83,
+  "tone": "night"
  },
  {
   "file": "images/art_06.jpg",
   "kind": "art",
-  "title": "The Fighting Temeraire, JMW Turner, National Gallery",
-  "credit": "",
-  "license": "Public domain"
+  "title": "The Fighting Temeraire",
+  "credit": "J. M. W. Turner",
+  "lum": 126,
+  "tone": "golden"
  },
  {
   "file": "images/art_07.jpg",
   "kind": "art",
-  "title": "Tsunami by hokusai 19th century",
-  "credit": "",
-  "license": "Public domain"
+  "title": "The Great Wave off Kanagawa",
+  "credit": "Katsushika Hokusai",
+  "lum": 192,
+  "tone": "day"
  },
  {
   "file": "images/art_08.jpg",
   "kind": "art",
-  "title": "Turner - Rain, Steam and Speed - National Gallery file",
-  "credit": "",
-  "license": "Public domain"
+  "title": "Rain, Steam and Speed",
+  "credit": "J. M. W. Turner",
+  "lum": 142,
+  "tone": "dawn"
  },
  {
   "file": "images/art_09.jpg",
   "kind": "art",
-  "title": "Van Gogh - Starry Night - Google Art Project",
-  "credit": "",
-  "license": "Public domain"
+  "title": "The Starry Night",
+  "credit": "Vincent van Gogh",
+  "lum": 90,
+  "tone": "night"
  },
  {
   "file": "images/art_10.jpg",
   "kind": "art",
-  "title": "Vincent van Gogh - Wheat Field with Cypresses - Google Art Project",
-  "credit": "",
-  "license": "Public domain"
+  "title": "Wheat Field with Cypresses",
+  "credit": "Vincent van Gogh",
+  "lum": 147,
+  "tone": "day"
+ },
+ {
+  "file": "images/art_11.jpg",
+  "kind": "art",
+  "title": "The Hay Wain",
+  "credit": "John Constable",
+  "lum": 103,
+  "tone": "day"
+ },
+ {
+  "file": "images/art_12.jpg",
+  "kind": "art",
+  "title": "The Ninth Wave",
+  "credit": "Ivan Aivazovsky",
+  "lum": 97,
+  "tone": "golden"
+ },
+ {
+  "file": "images/art_13.jpg",
+  "kind": "art",
+  "title": "Poppy Field",
+  "credit": "Claude Monet",
+  "lum": 167,
+  "tone": "day"
+ },
+ {
+  "file": "images/art_16.jpg",
+  "kind": "art",
+  "title": "Moonrise over the Sea",
+  "credit": "Caspar David Friedrich",
+  "lum": 70,
+  "tone": "night"
+ },
+ {
+  "file": "images/art_17.jpg",
+  "kind": "art",
+  "title": "The Rocky Mountains, Lander's Peak",
+  "credit": "Albert Bierstadt",
+  "lum": 132,
+  "tone": "day"
+ },
+ {
+  "file": "images/art_19.jpg",
+  "kind": "art",
+  "title": "Mont Sainte-Victoire",
+  "credit": "Paul Cézanne",
+  "lum": 105,
+  "tone": "day"
+ },
+ {
+  "file": "images/art_21.jpg",
+  "kind": "art",
+  "title": "Chalk Cliffs on Rügen",
+  "credit": "Caspar David Friedrich",
+  "lum": 105,
+  "tone": "day"
+ },
+ {
+  "file": "images/art_22.jpg",
+  "kind": "art",
+  "title": "The Wave",
+  "credit": "Gustave Courbet",
+  "lum": 45,
+  "tone": "night"
+ },
+ {
+  "file": "images/art_23.jpg",
+  "kind": "art",
+  "title": "Lavacourt, Sunshine and Snow",
+  "credit": "Claude Monet",
+  "lum": 184,
+  "tone": "day"
+ },
+ {
+  "file": "images/art_24.jpg",
+  "kind": "art",
+  "title": "Sunrise, Yosemite Valley",
+  "credit": "Albert Bierstadt",
+  "lum": 107,
+  "tone": "golden"
  }
 ];

@@ -68,11 +68,22 @@
   .credit { position: absolute; right: 18px; bottom: 12px; font-size: 11px; opacity: .45; max-width: 40vw; text-align: right;
             letter-spacing: .02em; transition: opacity .3s; }
   .credit:hover { opacity: .9; }
+  .pct { cursor: pointer; }
+  .veil { transition: opacity 2.4s ease; }
+  .clock.four { font-size: clamp(48px, 12vw, 220px); }
+  .intent { display: block; margin: 3.2vh auto 0; width: min(520px, 80vw); background: transparent; border: 0;
+            border-bottom: 1px solid rgba(255,255,255,.18); border-radius: 0; color: #fff; text-align: center; outline: none;
+            font-family: "Sora", "Segoe UI", system-ui, sans-serif; font-weight: 300; font-size: max(16px, 1.45vw);
+            letter-spacing: .04em; padding: 6px 4px; text-shadow: 0 1px 14px rgba(0,0,0,.7); cursor: text; transition: border-color .3s; }
+  .intent::placeholder { color: rgba(255,255,255,.5); }
+  .intent:focus { border-bottom-color: var(--accent); }
+  body.rest-mode .intent { display: none; }
   /* Phone / portrait */
   html, body { -webkit-tap-highlight-color: transparent; cursor: pointer; }   /* cursor makes iOS deliver taps to the page script */
   main { padding-top: max(4vh, env(safe-area-inset-top)); padding-bottom: max(4vh, env(safe-area-inset-bottom)); }
   @media (max-aspect-ratio: 1/1) {
     .clock { font-size: clamp(54px, 19vw, 200px); }
+    .clock.four { font-size: clamp(40px, 14vw, 140px); }
     .quote { bottom: calc(env(safe-area-inset-bottom) + 64px); }
     .quote q { font-size: clamp(20px, 5.6vw, 34px); }
     /* source line sits alone on the very bottom row, centred, one line, so it can never collide with the quote */
@@ -93,7 +104,8 @@
     <div class="headline">Time is precious. Not wasting it.</div>
     <div class="clock" id="clock"></div>
     <div class="track"><i id="bar"></i></div>
-    <div class="pct" id="pct"></div>
+    <div class="pct" id="pct" title="Tap to switch between day, week and year"></div>
+    <input class="intent" id="intent" type="text" maxlength="90" placeholder="Today I will…" autocomplete="off" enterkeyhint="done" aria-label="Your intention for today">
     <div class="rest" id="rest">The day is done.<br>Rest well.</div>
   </main>
 
@@ -112,7 +124,11 @@ const CONFIG = {
   restUntil: { h: 5,  m: 0  },   // after dayEnd until this hour, show the rest screen
   veilStrength: 0.7,             // darkness over the images: 0 = none, 1 = original strong veil
   rotateSeconds: 300,            // new background and quote every 5 minutes
-  onlineImages: true             // fetch fresh nature photos when connected
+  onlineImages: true,            // fetch fresh nature photos when connected
+  publicHolidays: true,          // treat public holidays as days off (counts to dayEnd instead of workEnd)
+  country: "auto",               // "auto" = guess from this device's time zone; or set e.g. "DE", "CH", "IT", "HU"
+  region: "",                    // optional state or canton for regional holidays, e.g. "NW" (with country DE) or "ZH" (CH)
+  daysOff: []                    // your own days off, e.g. ["2026-12-24", "2026-12-28..2027-01-01"]
 };
 
 /* ---------- Quotes ---------- */
@@ -154,32 +170,118 @@ const QUOTES = [
  ["Lose an hour in the morning, and you will spend all day looking for it.", "Richard Whately"],
  ["An inch of time is an inch of gold, but you cannot buy that inch of time with an inch of gold.", "Chinese proverb"],
  ["The best time to plant a tree was twenty years ago. The second best time is now.", "Chinese proverb"],
- ["Memento mori. Remember that you will die, and let it make today count.", "Stoic reminder"]
+ ["Memento mori. Remember that you will die, and let it make today count.", "Stoic reminder"],
+ ["You act like mortals in all that you fear, and like immortals in all that you desire.", "Seneca"],
+ ["It is not death that a man should fear, but he should fear never beginning to live.", "Marcus Aurelius"],
+ ["No great thing is created suddenly. If you tell me that you desire a fig, I answer that there must be time.", "Epictetus"],
+ ["Time, the devourer of all things.", "Ovid"],
+ ["Tell me, what is it you plan to do with your one wild and precious life?", "Mary Oliver"],
+ ["Time is but the stream I go a-fishing in.", "Henry David Thoreau"],
+ ["Finish every day and be done with it. You have done what you could.", "Ralph Waldo Emerson"],
+ ["The years teach much which the days never know.", "Ralph Waldo Emerson"],
+ ["Nature does not hurry, yet everything is accomplished.", "Lao Tzu"],
+ ["Do not count the days, make the days count.", "Muhammad Ali"],
+ ["Time is the coin of your life. It is the only coin you have, and only you can determine how it will be spent.", "Carl Sandburg"],
+ ["Things which matter most must never be at the mercy of things which matter least.", "Johann Wolfgang von Goethe"],
+ ["A man who dares to waste one hour of time has not discovered the value of life.", "Charles Darwin"],
+ ["Regret for the things we did can be tempered by time; it is regret for the things we did not do that is inconsolable.", "Sydney J. Harris"],
+ ["No man ever steps in the same river twice, for it is not the same river and he is not the same man.", "Heraclitus"]
 ];
 
 /* ---------- Helpers ---------- */
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, "0");
 const at = (d, t) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), t.h, t.m, 0, 0);
+const hhmm = t => pad(t.h) + ":" + pad(t.m);
+const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+
+/* ---------- Days off: your own days plus public holidays ---------- */
+const OFF = new Map();   // "YYYY-MM-DD" -> name shown on the page
+(function personalDays() {
+  for (const entry of CONFIG.daysOff) {
+    const [a, b] = String(entry).split("..");
+    const d = new Date(a + "T00:00:00"), end = new Date((b || a) + "T00:00:00");
+    for (let n = 0; n < 400 && d <= end; n++) { OFF.set(ymd(d), ""); d.setDate(d.getDate() + 1); }
+  }
+})();
+
+const TZ_COUNTRY = {
+  "Europe/Berlin": "DE", "Europe/Zurich": "CH", "Europe/Rome": "IT", "Europe/Vienna": "AT", "Europe/Paris": "FR",
+  "Europe/Madrid": "ES", "Europe/London": "GB", "Europe/Amsterdam": "NL", "Europe/Brussels": "BE", "Europe/Lisbon": "PT",
+  "Europe/Warsaw": "PL", "Europe/Prague": "CZ", "Europe/Budapest": "HU", "Europe/Stockholm": "SE", "Europe/Oslo": "NO",
+  "Europe/Copenhagen": "DK", "Europe/Dublin": "IE", "Europe/Athens": "GR", "Europe/Helsinki": "FI", "Europe/Luxembourg": "LU",
+  "Europe/Bucharest": "RO", "Europe/Sofia": "BG", "Europe/Zagreb": "HR", "Europe/Ljubljana": "SI", "Europe/Bratislava": "SK",
+  "America/New_York": "US", "America/Chicago": "US", "America/Denver": "US", "America/Los_Angeles": "US",
+  "America/Toronto": "CA", "Australia/Sydney": "AU", "Australia/Melbourne": "AU"
+};
+function detectCountry() {
+  if (CONFIG.country && CONFIG.country !== "auto") return CONFIG.country.toUpperCase();
+  try { const c = TZ_COUNTRY[Intl.DateTimeFormat().resolvedOptions().timeZone]; if (c) return c; } catch (e) {}
+  const m = (navigator.language || "").match(/-([A-Za-z]{2})$/);
+  return m ? m[1].toUpperCase() : null;
+}
+async function loadHolidays() {
+  if (!CONFIG.publicHolidays) return;
+  const cc = detectCountry(); if (!cc) return;
+  const year = new Date().getFullYear(), key = "holidays:" + cc + ":" + year;
+  const cached = () => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; } };
+  let list = null, c = cached();
+  if (c && Date.now() - c.t < 30 * 864e5) list = c.list;
+  if (!list && navigator.onLine) {
+    try {
+      const ctl = new AbortController(); setTimeout(() => ctl.abort(), 8000);
+      const r = await fetch("https://date.nager.at/api/v3/PublicHolidays/" + year + "/" + cc, { signal: ctl.signal });
+      if (r.ok) { list = await r.json(); try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), list: list })); } catch (e) {} }
+    } catch (e) {}
+  }
+  if (!list && c) list = c.list;                       // offline: use the last saved list, however old
+  if (!list) return;
+  let region = (CONFIG.region || "").toUpperCase();
+  if (region && region.indexOf("-") < 0) region = cc + "-" + region;
+  for (const h of list) {
+    if (h.types && h.types.indexOf("Public") < 0) continue;
+    if (h.global || (region && (h.counties || []).indexOf(region) >= 0)) if (!OFF.has(h.date)) OFF.set(h.date, h.name);
+  }
+  tick();
+}
+
+/* ---------- Countdown ---------- */
+const VIEWS = ["day", "week", "year"];
+let view = "day";
+{ const m = location.hash.match(/view=(week|year)/); if (m) view = m[1]; }   // e.g. ...index.html#view=week
 
 function currentTarget(now) {
+  if (view === "week") {
+    const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+    const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+    return { label: "This week · until Sunday " + hhmm(CONFIG.dayEnd), start: mon, end: at(sun, CONFIG.dayEnd), kind: "week", days: true };
+  }
+  if (view === "year") {
+    const y = now.getFullYear();
+    return { label: y + " · until 31 December", start: new Date(y, 0, 1), end: new Date(y + 1, 0, 1), kind: "year", days: true };
+  }
   const dow = now.getDay();                       // 0 Sun ... 6 Sat
-  const weekday = dow >= 1 && dow <= 5;
+  const key = ymd(now), isOff = OFF.has(key), offName = OFF.get(key);
+  const weekday = dow >= 1 && dow <= 5 && !isOff;
   const dayEnd = at(now, CONFIG.dayEnd);
   const restEnd = at(now, CONFIG.restUntil);
   if (now >= dayEnd || now < restEnd) return { rest: true };
   if (weekday) {
     const workEnd = at(now, CONFIG.workEnd);
-    if (now < workEnd) return { label: "Work day · until " + pad(CONFIG.workEnd.h) + ":" + pad(CONFIG.workEnd.m),
-                                start: at(now, CONFIG.workStart), end: workEnd, kind: "work" };
+    if (now < workEnd) return { label: "Work day · until " + hhmm(CONFIG.workEnd), start: at(now, CONFIG.workStart), end: workEnd, kind: "work" };
   }
-  return { label: "Your day · until " + pad(CONFIG.dayEnd.h) + ":" + pad(CONFIG.dayEnd.m),
+  return { label: (isOff ? "Day off · " + (offName ? offName + " · " : "") + "until " : "Your day · until ") + hhmm(CONFIG.dayEnd),
            start: at(now, CONFIG.dayStart), end: dayEnd, kind: "day" };
 }
 
-let lastKind = null;
+let lastDay = null;
+function loadIntent() {
+  const el = $("intent"); el.value = "";
+  try { const v = JSON.parse(localStorage.getItem("intent") || "null"); if (v && v.d === ymd(new Date())) el.value = v.v; } catch (e) {}
+}
 function tick() {
   const now = new Date();
+  if (ymd(now) !== lastDay) { lastDay = ymd(now); loadIntent(); }       // the intention belongs to one day only
   const t = currentTarget(now);
   document.body.classList.toggle("rest-mode", !!t.rest);
   if (t.rest) {
@@ -187,30 +289,62 @@ function tick() {
     document.title = "Day complete";
     return;
   }
-  if (t.kind !== lastKind) { lastKind = t.kind; $("mode").textContent = t.label; }
+  if ($("mode").textContent !== t.label) $("mode").textContent = t.label;
   let s = Math.max(0, Math.floor((t.end - now) / 1000));
+  const d = Math.floor(s / 86400); s -= d * 86400;
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-  $("clock").innerHTML = '<div class="g">' + pad(h) + '<small>hours</small></div><span class="sep">:</span>' +
-    '<div class="g">' + pad(m) + '<small>minutes</small></div><span class="sep">:</span>' +
-    '<div class="g">' + pad(sec) + '<small>seconds</small></div>';
-  document.title = pad(h) + ":" + pad(m) + ":" + pad(sec) + " left";
-  const total = t.end - t.start;
-  const done = Math.min(1, Math.max(0, (now - t.start) / total));
+  const g = (v, label) => '<div class="g">' + pad(v) + '<small>' + label + '</small></div>';
+  const sep = '<span class="sep">:</span>';
+  const showDays = t.days && d > 0;
+  $("clock").classList.toggle("four", showDays);
+  $("clock").innerHTML = (showDays ? g(d, "days") + sep : "") + g(h, "hours") + sep + g(m, "minutes") + sep + g(sec, "seconds");
+  document.title = (showDays ? d + "d " : "") + pad(h) + ":" + pad(m) + ":" + pad(sec) + " left";
+  const done = Math.min(1, Math.max(0, (now - t.start) / (t.end - t.start)));
   $("bar").style.width = (done * 100).toFixed(2) + "%";
-  $("pct").textContent = Math.round(done * 100) + "% of the " + (t.kind === "work" ? "work day" : "day") + " is behind you";
+  const what = t.kind === "work" ? "the work day" : t.kind === "week" ? "the week" : t.kind === "year" ? String(now.getFullYear()) : "the day";
+  $("pct").textContent = Math.round(done * 100) + "% of " + what + " is behind you";
 }
 
-/* ---------- Backgrounds ---------- */
+/* ---------- Backgrounds: picked by time of day, veil set by the picture's brightness ---------- */
 let pool = (window.LOCAL_IMAGES || []).slice();
 let current = 0, usedRecent = [];
 
+/* Rough sunrise and sunset for central Europe from the date alone (no location needed) */
+function dayPhase(now) {
+  const doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+  const len = 12 + 4.2 * Math.sin(2 * Math.PI * (doy - 80) / 365);
+  const rise = 12.3 - len / 2, set = 12.3 + len / 2, h = now.getHours() + now.getMinutes() / 60;
+  if (h < rise - 0.7 || h > set + 1.2) return "night";
+  if (h < rise + 3) return "morning";
+  if (h < set - 2.5) return "midday";
+  if (h < set + 0.3) return "evening";
+  return "late";
+}
+const TONE_WEIGHTS = {
+  morning: { dawn: 4,   day: 2,   golden: 1.2, night: 0.15 },
+  midday:  { day: 4,    dawn: 1.2, golden: 1.2, night: 0.15 },
+  evening: { golden: 4, day: 1.5, dawn: 0.8,  night: 1 },
+  late:    { night: 3,  golden: 2.5, day: 0.5, dawn: 0.2 },
+  night:   { night: 4,  golden: 1.5, dawn: 0.4, day: 0.2 }
+};
+
 function pick() {
+  const w = TONE_WEIGHTS[dayPhase(new Date())];
   const candidates = pool.filter(p => !usedRecent.includes(p.file));
   const list = candidates.length ? candidates : pool;
-  const choice = list[Math.floor(Math.random() * list.length)];
+  const weights = list.map(p => w[p.tone || "day"] || 1);
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0), choice = list[list.length - 1];
+  for (let i = 0; i < list.length; i++) { r -= weights[i]; if (r <= 0) { choice = list[i]; break; } }
   usedRecent.push(choice.file);
   if (usedRecent.length > Math.min(10, pool.length - 1)) usedRecent.shift();
   return choice;
+}
+
+/* Bright pictures get a stronger veil, dark ones a lighter one, so the text stays readable and the picture stays bright */
+function veilFor(img) {
+  const L = typeof img.lum === "number" ? img.lum : 125;
+  const k = Math.min(0.95, Math.max(0.4, 0.35 + L / 255 * 0.75));
+  return +(k * CONFIG.veilStrength / 0.7).toFixed(2);
 }
 
 function setCredit(img) {
@@ -225,7 +359,9 @@ function showImage(img) {
       const next = $(current ? "bgA" : "bgB"), prev = $(current ? "bgB" : "bgA");
       current = 1 - current;
       next.style.backgroundImage = 'url("' + img.file.replace(/"/g, "%22") + '")';
-      const dim = "rgba(0,0,0," + (0.62 * CONFIG.veilStrength).toFixed(2) + ")";
+      const veil = veilFor(img);
+      $("veil").style.opacity = veil;
+      const dim = "rgba(0,0,0," + (0.62 * veil).toFixed(2) + ")";
       document.documentElement.style.backgroundImage = "linear-gradient(" + dim + "," + dim + "), url(\"" + img.file.replace(/"/g, "%22") + "\")";
       next.classList.remove("show"); void next.offsetWidth; next.classList.add("show");
       setTimeout(() => prev.classList.remove("show"), 2400);
@@ -245,6 +381,26 @@ async function nextBackground() {
   }
 }
 
+/* Measure a small version of a picture: brightness and warmth decide its tone */
+function measure(url) {
+  return new Promise(res => {
+    const im = new Image(); im.crossOrigin = "anonymous";
+    im.onload = () => {
+      try {
+        const c = document.createElement("canvas"); c.width = c.height = 24;
+        const x = c.getContext("2d"); x.drawImage(im, 0, 0, 24, 24);
+        const px = x.getImageData(0, 0, 24, 24).data; let r = 0, g = 0, b = 0;
+        for (let i = 0; i < px.length; i += 4) { r += px[i]; g += px[i + 1]; b += px[i + 2]; }
+        const n = px.length / 4; r /= n; g /= n; b /= n;
+        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b, warm = r - b;
+        res({ lum: Math.round(lum), tone: lum < 85 ? "night" : warm > 28 ? "golden" : "day" });
+      } catch (e) { res(null); }
+    };
+    im.onerror = () => res(null);
+    im.src = url;
+  });
+}
+
 /* Fresh nature photos from Wikimedia Commons (featured pictures), mixed into the pool when online */
 async function loadOnline() {
   if (!CONFIG.onlineImages || !navigator.onLine) return;
@@ -252,22 +408,24 @@ async function loadOnline() {
                 "Featured_pictures_of_forests", "Featured_pictures_of_lakes", "Featured_pictures_of_beaches"];
   const cat = cats[Math.floor(Math.random() * cats.length)];
   const url = "https://commons.wikimedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=Category:" + cat +
-    "&gcmtype=file&gcmlimit=60&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=1920&format=json&origin=*";
+    "&gcmtype=file&gcmlimit=60&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=120&format=json&origin=*";
   try {
     const ctl = new AbortController(); setTimeout(() => ctl.abort(), 8000);
     const r = await fetch(url, { signal: ctl.signal });
     const d = await r.json();
     const strip = s => (s || "").replace(/<[^>]+>/g, "").trim();
-    const fresh = Object.values(d.query.pages).map(p => {
-      const ii = (p.imageinfo || [])[0]; if (!ii || !ii.thumburl) return null;
+    let fresh = Object.values(d.query.pages).map(p => {
+      const ii = (p.imageinfo || [])[0]; if (!ii || !ii.thumburl || ii.thumburl.indexOf("/120px-") < 0) return null;
       const meta = ii.extmetadata || {};
       const ratio = ii.width / ii.height;
       if (ii.width < 3000 || ratio < 1.4 || ratio > 2.3) return null;
       if (!/CC BY|CC0|Public domain|PD/i.test((meta.LicenseShortName || {}).value || "")) return null;
       const title = strip((meta.ObjectName || {}).value || p.title.replace(/^File:/, "").replace(/\.\w+$/, ""));
       const artist = strip((meta.Artist || {}).value || "").slice(0, 60);
-      return { file: ii.thumburl, kind: "online", title: title, credit: artist };
+      return { small: ii.thumburl, file: ii.thumburl.replace("/120px-", "/1920px-"), kind: "online", title: title, credit: artist };
     }).filter(Boolean);
+    fresh.sort(() => Math.random() - 0.5); fresh = fresh.slice(0, 16);
+    await Promise.all(fresh.map(async f => { const m = await measure(f.small); if (m) { f.lum = m.lum; f.tone = m.tone; } }));
     pool = pool.concat(fresh);
   } catch (e) { /* offline or blocked: bundled set keeps working */ }
 }
@@ -343,9 +501,13 @@ tick(); setInterval(tick, 250);
 nextQuote(true);
 nextBackground().then(loadOnline);
 setInterval(() => { nextBackground(); nextQuote(false); }, CONFIG.rotateSeconds * 1000);
-document.addEventListener("click", () => { nextBackground(); nextQuote(false); });
+$("pct").addEventListener("click", () => { view = VIEWS[(VIEWS.indexOf(view) + 1) % VIEWS.length]; tick(); });
+$("intent").addEventListener("input", () => { try { localStorage.setItem("intent", JSON.stringify({ d: ymd(new Date()), v: $("intent").value })); } catch (e) {} });
+$("intent").addEventListener("keydown", e => { if (e.key === "Enter") $("intent").blur(); });
+document.addEventListener("click", e => { if (e.target.closest && e.target.closest("#intent, #pct")) return; nextBackground(); nextQuote(false); });
+loadHolidays();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
-document.addEventListener("keydown", e => { if (e.code === "Space" || e.key === "ArrowRight") { nextBackground(); nextQuote(false); } });
+document.addEventListener("keydown", e => { if (e.target && e.target.tagName === "INPUT") return; if (e.code === "Space" || e.key === "ArrowRight") { nextBackground(); nextQuote(false); } });
 </script>
 </body>
 </html>
