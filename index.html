@@ -295,7 +295,7 @@ function tick() {
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
   const g = (v, label) => '<div class="g">' + pad(v) + '<small>' + label + '</small></div>';
   const sep = '<span class="sep">:</span>';
-  const showDays = t.days && d > 0;
+  const showDays = !!(t.days && d > 0);
   $("clock").classList.toggle("four", showDays);
   $("clock").innerHTML = (showDays ? g(d, "days") + sep : "") + g(h, "hours") + sep + g(m, "minutes") + sep + g(sec, "seconds");
   document.title = (showDays ? d + "d " : "") + pad(h) + ":" + pad(m) + ":" + pad(sec) + " left";
